@@ -10,8 +10,12 @@ if(strpos($url,"/") !== 0){
     $url = "/$url";
 }
 
+// GET DATABASE CONNECTION
 $dbInstance = new DB();
 $dbConn = $dbInstance->connect($db);
+
+// RETURN RESPONSE AS JSON
+header("Content-Type:application/json");
 
 // GET ALL POSTS ENDPOINT
 //	- URI: /blog/api/index.php/posts
@@ -125,7 +129,8 @@ function bindAllValues($statement, $params){
 //	1. uses str_replace($search, $replace, $subject) to remove url
 //	2. then explodes string at '?' separator (separting the post # from the parameters)
 //	3. then takes just the post # and confirms it's numeric.
-if(is_numeric(explode('?', str_replace("/blog/api/index.php/posts/", '', $url))[0]))
+if((is_numeric(explode('?', str_replace("/blog/api/index.php/posts/", '', $url))[0]))
+	&& ($_SERVER['REQUEST_METHOD'] == 'PATCH'))
 {
     $input = $_GET;
     $postId = explode('?', str_replace("/blog/api/index.php/posts/", '', $url))[0];
@@ -186,6 +191,34 @@ function updatePost($input, $db, $postId){
 	
     return $postId;
 	
+}
+
+
+// DELETE POST ENDPOINT
+//	- URI: /blog/api/index.php/posts/{id}
+//	- Method: DELETE
+//if url is like /posts/{id} (id is integer) and method is DELETE
+
+if(preg_match("/posts\/([0-9])+/", $url, $matches) && $_SERVER['REQUEST_METHOD'] == 'DELETE'){
+    $postId = $matches[1];
+    deletePost($dbConn, $postId);
+
+    echo json_encode([
+        'id'=> $postId,
+        'deleted'=> 'true'
+    ]);
+}
+
+/**
+ * Delete Post record based on ID
+ *
+ * @param $db
+ * @param $id
+ */
+function deletePost($db, $id) {    
+    $statement = $db->prepare("DELETE FROM posts where id=:id");
+    $statement->bindValue(':id', $id);
+    $statement->execute();
 }
 
 ?>
