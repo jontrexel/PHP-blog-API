@@ -121,9 +121,14 @@ function bindAllValues($statement, $params){
 //	- (Query String) Parameters: title, status, content, user_id
 //Code to update post, if /posts/{id} and method is PATCH
 
-if(preg_match("/posts\/([0-9])+/", $url, $matches) && $_SERVER['REQUEST_METHOD'] == 'PATCH'){
+//if(preg_match("/posts\/([0-9])+/", $url, $matches) && $_SERVER['REQUEST_METHOD'] == 'PATCH')
+//	1. uses str_replace($search, $replace, $subject) to remove url
+//	2. then explodes string at '?' separator (separting the post # from the parameters)
+//	3. then takes just the post # and confirms it's numeric.
+if(is_numeric(explode('?', str_replace("/blog/api/index.php/posts/", '', $url))[0]))
+{
     $input = $_GET;
-    $postId = $matches[1];
+    $postId = explode('?', str_replace("/blog/api/index.php/posts/", '', $url))[0];
     updatePost($input, $dbConn, $postId);
 
     $post = getPost($dbConn, $postId);
@@ -165,16 +170,22 @@ function updatePost($input, $db, $postId){
     $sql = "
           UPDATE posts 
           SET $fields 
-          WHERE id=':postId'
+          WHERE id=:postId
            ";
-
+	//echo 'id: ' . $postId;
+	//print_r($input);
+	//echo $sql;
+	
     $statement = $db->prepare($sql);
-    $statement->bindValue(':id', $id);
-    bindAllValues($statement, $input);
-
+    $statement->bindValue(':postId', $postId);
+    $statement = bindAllValues($statement, $input);
+	
+	//echo $statement->debugDumpParams();
+	
     $statement->execute();
-
+	
     return $postId;
+	
 }
 
 ?>
