@@ -14,7 +14,7 @@ $dbInstance = new DB();
 $dbConn = $dbInstance->connect($db);
 
 // GET ALL POSTS ENDPOINT
-//	- URI: /api/posts
+//	- URI: /blog/api/index.php/posts
 //	- Method: GET
 
 if($url == '/blog/api/index.php/posts' && $_SERVER['REQUEST_METHOD'] == 'GET') {
@@ -48,7 +48,7 @@ function getAllPostsTest() {
 
 
 // GET SINGLE POST ENDPOINT:
-//	- URI: /api/posts/{id}
+//	- URI: /blog/api/index.php/posts/{id}
 //	- Method: GET
 //			uses str_replace($search, $replace, $subject)
 if((is_numeric(str_replace("/blog/api/index.php/posts/", '', $url)))
@@ -69,8 +69,9 @@ function getPost($db, $id) {
 }
 
 // SUBMIT NEW POST ENDPOINT
-//	- URI: /api/posts
+//	- URI: /blog/api/index.php/posts
 //	- Method: POST
+//	- (Body) Parameters: title, status, content, user_id
 
 if($url == '/blog/api/index.php/posts' && $_SERVER['REQUEST_METHOD'] == 'POST') {
  $input = $_POST;
@@ -114,5 +115,66 @@ function bindAllValues($statement, $params){
 }
 
 
+// UPDATE POST ENDPOINT
+//	- URI: /blog/api/index.php/posts/{id}
+//	- Method: PATCH
+//	- (Query String) Parameters: title, status, content, user_id
+//Code to update post, if /posts/{id} and method is PATCH
+
+if(preg_match("/posts\/([0-9])+/", $url, $matches) && $_SERVER['REQUEST_METHOD'] == 'PATCH'){
+    $input = $_GET;
+    $postId = $matches[1];
+    updatePost($input, $dbConn, $postId);
+
+    $post = getPost($dbConn, $postId);
+    echo json_encode($post);
+}
+
+/**
+ * Get fields as parameters to set in record
+ *
+ * @param $input
+ * @return string
+ */
+function getParams($input) {
+    $allowedFields = ['title', 'status', 'content', 'user_id'];
+
+    $filterParams = [];
+    foreach($input as $param => $value){
+        if(in_array($param, $allowedFields)){
+            $filterParams[] = "$param=:$param";
+        }
+    }
+
+    return implode(", ", $filterParams);
+}
+
+
+/**
+ * Update Post
+ *
+ * @param $input
+ * @param $db
+ * @param $postId
+ * @return integer
+ */
+function updatePost($input, $db, $postId){
+
+    $fields = getParams($input);
+
+    $sql = "
+          UPDATE posts 
+          SET $fields 
+          WHERE id=':postId'
+           ";
+
+    $statement = $db->prepare($sql);
+    $statement->bindValue(':id', $id);
+    bindAllValues($statement, $input);
+
+    $statement->execute();
+
+    return $postId;
+}
 
 ?>
