@@ -34,7 +34,7 @@ if($url == '/blog/api/index.php/comments' && $_SERVER['REQUEST_METHOD'] == 'POST
 }
 
 // RegEx alternatives - sample code regex didn't work
-function old($url) { return preg_match("/blog/api/index.php/comments\/([0-9])+/", $url, $matches); }
+//function old($url) { return preg_match("/blog/api/index.php/comments\/([0-9])+/", $url, $matches); }
 function num_is_in_url($url) { return (is_numeric(explode('?', str_replace("/blog/api/index.php/comments/", '', $url))[0])); }
 function get_num_from_url($url) { return explode('?', str_replace("/blog/api/index.php/comments/", '', $url))[0]; }
 
